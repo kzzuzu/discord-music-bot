@@ -1,0 +1,89 @@
+# -----------------------------
+# Java 編譯輸出
+# -----------------------------
+target/
+**/target/
+*.class
+*.jar
+*.war
+*.ear
+
+# -----------------------------
+# Maven
+# -----------------------------
+/pom.xml.tag
+/pom.xml.releaseBackup
+/pom.xml.versionsBackup
+/dependency-reduced-pom.xml
+/buildNumber.properties
+/.mvn/wrapper/maven-wrapper.jar
+
+# -----------------------------
+# Gradle
+# -----------------------------
+.gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# -----------------------------
+# IntelliJ IDEA
+# -----------------------------
+.idea/
+*.iml
+*.iws
+*.ipr
+.idea/modules.xml
+.idea/compiler.xml
+.idea/workspace.xml
+.idea/libraries/
+.idea/jarRepositories.xml
+
+# -----------------------------
+# Eclipse
+# -----------------------------
+.classpath
+.project
+.settings/
+.factorypath
+.apt_generated
+.springBeans
+.sts4-cache
+
+# -----------------------------
+# NetBeans
+# -----------------------------
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# -----------------------------
+# VS Code
+# -----------------------------
+.vscode/
+
+# -----------------------------
+# 日誌檔案
+# -----------------------------
+logs/
+*.log
+
+# -----------------------------
+# Mac OS
+# -----------------------------
+.DS_Store
+
+# -----------------------------
+# 本地環境設定 / 私密資訊
+# -----------------------------
+src/main/resources/application.properties
+src/test/resources/test-application.properties
+requirements.md
+
+# -----------------------------
+# 其他可能生成的檔案
+# -----------------------------
+/generated-sources/
+/generated-test-sources/
