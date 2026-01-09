@@ -1,47 +1,13 @@
 # -----------------------------
-# Java 編譯輸出
-# -----------------------------
-target/
-**/target/
-*.class
-*.jar
-*.war
-*.ear
-
-# -----------------------------
-# Maven
-# -----------------------------
-/pom.xml.tag
-/pom.xml.releaseBackup
-/pom.xml.versionsBackup
-/dependency-reduced-pom.xml
-/buildNumber.properties
-/.mvn/wrapper/maven-wrapper.jar
-
-# -----------------------------
-# Gradle
-# -----------------------------
-.gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
+# IDE
 # -----------------------------
 # IntelliJ IDEA
-# -----------------------------
 .idea/
 *.iml
 *.iws
 *.ipr
-.idea/modules.xml
-.idea/compiler.xml
-.idea/workspace.xml
-.idea/libraries/
-.idea/jarRepositories.xml
 
-# -----------------------------
 # Eclipse
-# -----------------------------
 .classpath
 .project
 .settings/
@@ -50,40 +16,70 @@ build/
 .springBeans
 .sts4-cache
 
-# -----------------------------
 # NetBeans
-# -----------------------------
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
 
-# -----------------------------
 # VS Code
-# -----------------------------
 .vscode/
 
 # -----------------------------
-# 日誌檔案
+# 建置工具
+# -----------------------------
+# Maven
+target/
+**/target/
+/pom.xml.tag
+/pom.xml.releaseBackup
+/pom.xml.versionsBackup
+/dependency-reduced-pom.xml
+/buildNumber.properties
+/.mvn/wrapper/maven-wrapper.jar
+
+# Gradle
+.gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# -----------------------------
+# Java 編譯輸出
+# -----------------------------
+*.class
+*.jar
+*.war
+*.ear
+
+# -----------------------------
+# 日誌與臨時檔案
 # -----------------------------
 logs/
 *.log
+*.tmp
+/generated-sources/
+/generated-test-sources/
 
 # -----------------------------
-# Mac OS
+# 作業系統
 # -----------------------------
+# macOS
 .DS_Store
 
+# Windows
+Thumbs.db
+
 # -----------------------------
-# 本地環境設定 / 私密資訊
+# 私密資訊與本地設定
 # -----------------------------
 src/main/resources/application.properties
 src/test/resources/test-application.properties
 requirements.md
 
 # -----------------------------
-# 其他可能生成的檔案
+# 開發工具
 # -----------------------------
-/generated-sources/
-/generated-test-sources/
+# Claude Code
+.claude
