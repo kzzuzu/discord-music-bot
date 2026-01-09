@@ -46,23 +46,18 @@ public class MusicService {
         // 配置 YouTube 來源管理器
         audioPlayerManager.getConfiguration().setFilterHotSwapEnabled(true);
 
-        // 嘗試註冊增強型 YouTube 來源管理器
+        // 註冊增強型 YouTube 來源管理器
         try {
-            Class<?> ytSourceManagerClass = Class.forName("dev.lavalink.youtube.YoutubeAudioSourceManager");
-            Object ytSourceManager = ytSourceManagerClass.getDeclaredConstructor().newInstance();
+            dev.lavalink.youtube.YoutubeAudioSourceManager ytSourceManager =
+                new dev.lavalink.youtube.YoutubeAudioSourceManager();
 
-            Class<?> clientConfigClass = Class.forName("dev.lavalink.youtube.clients.ClientConfig");
-            Class<?> clientOptionsClass = Class.forName("dev.lavalink.youtube.clients.ClientOptions");
-
-            Object clientOptions = clientOptionsClass.getConstructor(boolean.class, boolean.class, boolean.class, boolean.class)
-                    .newInstance(true, true, true, true);
-
-            audioPlayerManager.registerSourceManager((com.sedmelluq.discord.lavaplayer.source.AudioSourceManager) ytSourceManager);
-            logger.info("成功註冊增強型 YouTube 來源管理器");
+            audioPlayerManager.registerSourceManager(ytSourceManager);
+            logger.info("成功註冊增強型 YouTube 來源管理器 (dev.lavalink.youtube)");
         } catch (Exception e) {
-            logger.warn("無法註冊新的 YouTube 來源管理器: {}", e.getMessage());
+            logger.error("無法註冊 YouTube 來源管理器: {}", e.getMessage(), e);
+            // 使用預設來源管理器作為備用
             AudioSourceManagers.registerRemoteSources(audioPlayerManager);
-            logger.info("使用預設 YouTube 來源管理器");
+            logger.info("使用預設來源管理器");
         }
 
         AudioSourceManagers.registerLocalSource(audioPlayerManager);
@@ -191,91 +186,40 @@ public class MusicService {
 
     /**
      * 載入並播放音樂
+     * 現在直接使用 LavaPlayer 的 YouTube 來源管理器，不再需要 yt-dlp 解析
      */
     private void loadAndPlay(TextChannel channel, String trackUrl) {
-        if (trackUrl.contains("youtube.com") || trackUrl.contains("youtu.be")) {
-            loadYouTubeTrack(channel, trackUrl);
-        } else {
-            loadRegularTrack(channel, trackUrl);
-        }
-    }
-
-    /**
-     * 載入 YouTube 音軌
-     */
-    private void loadYouTubeTrack(TextChannel channel, String youtubeUrl) {
-        new Thread(() -> {
-            try {
-                YouTubeResolver.TrackInfo trackInfo = youTubeResolver.resolveYouTubeUrl(youtubeUrl);
-
-                if (trackInfo != null) {
-                    audioPlayerManager.loadItem(trackInfo.url, new AudioLoadResultHandler() {
-                        @Override
-                        public void trackLoaded(AudioTrack track) {
-                            handleTrackLoaded(channel, track, trackInfo.title, trackInfo.duration);
-                        }
-
-                        @Override
-                        public void playlistLoaded(AudioPlaylist playlist) {
-                            AudioTrack firstTrack = playlist.getSelectedTrack();
-                            if (firstTrack == null) {
-                                firstTrack = playlist.getTracks().get(0);
-                            }
-                            handleTrackLoaded(channel, firstTrack, trackInfo.title, trackInfo.duration);
-                        }
-
-                        @Override
-                        public void noMatches() {
-                            channel.sendMessage("❌ 無法播放解析後的音頻流。").queue();
-                            logger.warn("無法找到匹配的音軌: {}", youtubeUrl);
-                        }
-
-                        @Override
-                        public void loadFailed(FriendlyException exception) {
-                            channel.sendMessage("❌ 播放失敗: " + exception.getMessage()).queue();
-                            logger.error("載入音軌失敗: {}", exception.getMessage(), exception);
-                        }
-                    });
-                } else {
-                    channel.sendMessage("❌ 無法解析 YouTube 影片。").queue();
-                    logger.warn("YouTube URL 解析失敗: {}", youtubeUrl);
-                }
-            } catch (Exception e) {
-                channel.sendMessage("❌ YouTube 解析失敗: " + e.getMessage()).queue();
-                logger.error("YouTube 解析異常", e);
-            }
-        }).start();
-    }
-
-    /**
-     * 載入一般音軌
-     */
-    private void loadRegularTrack(TextChannel channel, String trackUrl) {
         audioPlayerManager.loadItem(trackUrl, new AudioLoadResultHandler() {
             @Override
             public void trackLoaded(AudioTrack track) {
                 handleTrackLoaded(channel, track, track.getInfo().title, track.getDuration());
+                logger.info("✅ 成功載入音軌: {}", track.getInfo().title);
             }
 
             @Override
             public void playlistLoaded(AudioPlaylist playlist) {
                 AudioTrack firstTrack = playlist.getSelectedTrack();
-                if (firstTrack == null) {
+                if (firstTrack == null && !playlist.getTracks().isEmpty()) {
                     firstTrack = playlist.getTracks().get(0);
                 }
-                handleTrackLoaded(channel, firstTrack, firstTrack.getInfo().title, firstTrack.getDuration());
+                if (firstTrack != null) {
+                    handleTrackLoaded(channel, firstTrack, firstTrack.getInfo().title, firstTrack.getDuration());
+                    logger.info("✅ 成功載入播放清單首曲: {}", firstTrack.getInfo().title);
+                } else {
+                    channel.sendMessage("❌ 播放清單為空。").queue();
+                }
             }
 
             @Override
             public void noMatches() {
                 channel.sendMessage("❌ 找不到該音樂。請檢查網址是否正確。").queue();
-                logger.warn("無法找到匹配的音軌: {}", trackUrl);
+                logger.warn("❌ 無法找到匹配的音軌: {}", trackUrl);
             }
 
             @Override
             public void loadFailed(FriendlyException exception) {
                 channel.sendMessage("❌ 載入音樂時發生錯誤: " + exception.getMessage()).queue();
-                logger.error("載入音軌失敗: {}", exception.getMessage(), exception);
+                logger.error("❌ 載入音軌失敗: {} - {}", trackUrl, exception.getMessage(), exception);
             }
         });
     }
