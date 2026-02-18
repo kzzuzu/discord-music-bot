@@ -74,6 +74,7 @@ Thumbs.db
 # -----------------------------
 # 私密資訊與本地設定
 # -----------------------------
+.env
 src/main/resources/application.properties
 src/test/resources/test-application.properties
 requirements.md
