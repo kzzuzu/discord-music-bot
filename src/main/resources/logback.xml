@@ -22,6 +22,18 @@
         <appender-ref ref="FILE" />
     </logger>
 
+    <!-- YouTube source manager：顯示 OAuth 授權網址等 INFO 訊息 -->
+    <logger name="dev.lavalink.youtube" level="INFO">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+    </logger>
+
+    <!-- JDA 音訊連線 debug -->
+    <logger name="net.dv8tion.jda.internal.audio" level="DEBUG">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+    </logger>
+
     <!-- Root logger -->
     <root level="WARN">
         <appender-ref ref="CONSOLE" />

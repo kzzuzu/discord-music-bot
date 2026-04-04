@@ -78,6 +78,7 @@ Thumbs.db
 src/main/resources/application.properties
 src/test/resources/test-application.properties
 requirements.md
+oauth2.json
 
 # -----------------------------
 # 開發工具

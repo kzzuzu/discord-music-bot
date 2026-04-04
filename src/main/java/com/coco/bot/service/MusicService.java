@@ -48,8 +48,23 @@ public class MusicService {
 
         // 註冊增強型 YouTube 來源管理器
         try {
+            // Web：負責 metadata loading（loadVideo）
+            // Tv：唯一支援 OAuth2 的 client，負責 stream URL 取得（loadFormats）
+            // 內建 JS cipher 提取器在 1.18.0 已失效，改用遠端 cipher server
             dev.lavalink.youtube.YoutubeAudioSourceManager ytSourceManager =
-                new dev.lavalink.youtube.YoutubeAudioSourceManager();
+                new dev.lavalink.youtube.YoutubeAudioSourceManager(
+                    new dev.lavalink.youtube.clients.Web(),
+                    new dev.lavalink.youtube.clients.Tv()
+                );
+
+            // 使用遠端 cipher server 解決 YouTube 更換 player 腳本問題
+            ytSourceManager.setCipherManager(
+                new dev.lavalink.youtube.cipher.RemoteCipherManager("https://cipher.kikkia.dev/")
+            );
+            logger.info("已啟用遠端 cipher server");
+
+            ytSourceManager.useOauth2(null, false);
+            logger.info("YouTube OAuth2 已啟用（token 快取於 oauth2.json）");
 
             audioPlayerManager.registerSourceManager(ytSourceManager);
             logger.info("成功註冊增強型 YouTube 來源管理器 (dev.lavalink.youtube)");
@@ -72,6 +87,7 @@ public class MusicService {
         audioPlayer.addListener(new AudioEventAdapter() {
             @Override
             public void onTrackEnd(AudioPlayer player, AudioTrack track, AudioTrackEndReason endReason) {
+                logger.info("音軌結束: {} 原因: {}", track.getInfo().title, endReason);
                 if (endReason.mayStartNext) {
                     AudioTrack nextTrack = musicQueue.getNextTrack();
                     if (nextTrack != null) {
@@ -81,6 +97,16 @@ public class MusicService {
                         logger.info("佇列已空，播放結束");
                     }
                 }
+            }
+
+            @Override
+            public void onTrackException(AudioPlayer player, AudioTrack track, com.sedmelluq.discord.lavaplayer.tools.FriendlyException exception) {
+                logger.error("音軌播放異常: {} 錯誤: {}", track.getInfo().title, exception.getMessage(), exception);
+            }
+
+            @Override
+            public void onTrackStuck(AudioPlayer player, AudioTrack track, long thresholdMs) {
+                logger.warn("音軌卡住: {} 超過 {}ms", track.getInfo().title, thresholdMs);
             }
         });
 
@@ -180,8 +206,11 @@ public class MusicService {
      * 連接到語音頻道
      */
     private void connectToVoiceChannel(AudioManager audioManager, VoiceChannel voiceChannel) {
+        audioManager.setSelfDeafened(false);
+        audioManager.setSelfMuted(false);
         audioManager.setSendingHandler(sendHandler);
         audioManager.openAudioConnection(voiceChannel);
+        logger.info("語音連線已請求: {}", voiceChannel.getName());
     }
 
     /**

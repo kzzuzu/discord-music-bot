@@ -1,8 +1,10 @@
 package com.coco.bot.service;
 
 import com.coco.bot.controller.DiscordEventController;
+import club.minnced.discord.jdave.interop.JDaveSessionFactory;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.audio.AudioModuleConfig;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +35,8 @@ public class DiscordBotService {
             JDABuilder builder = JDABuilder.createDefault(botToken);
             builder.addEventListeners(discordEventController);
             builder.enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_VOICE_STATES);
+            builder.setAudioModuleConfig(new AudioModuleConfig().withDaveSessionFactory(new JDaveSessionFactory()));
+            logger.info("已啟用 DAVE E2EE 協議支援 (JDaveSessionFactory)");
 
             this.jda = builder.build();
             this.jda.awaitReady();

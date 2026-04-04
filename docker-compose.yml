@@ -31,6 +31,9 @@ services:
       DB_HOST: mysql
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - bot_data:/app/data  # 持久化 oauth2.json，容器重建後不需重新授權
 
 volumes:
   mysql_data:
+  bot_data:
