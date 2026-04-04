@@ -320,11 +320,16 @@ public class PlaylistService {
     /**
      * 載入歌曲信息並創建播放清單
      */
+    private static boolean isYtDlpSupportedUrl(String url) {
+        return url.contains("youtube.com") || url.contains("youtu.be")
+            || url.contains("bilibili.com") || url.contains("b23.tv");
+    }
+
     private void loadSongInfoAndCreatePlaylist(MessageReceivedEvent event, String userId, String playlistName, String songUrl) {
         new Thread(() -> {
             try {
-                if (songUrl.contains("youtube.com") || songUrl.contains("youtu.be")) {
-                    YouTubeResolver.TrackInfo trackInfo = youTubeResolver.resolveYouTubeUrl(songUrl);
+                if (isYtDlpSupportedUrl(songUrl)) {
+                    YouTubeResolver.TrackInfo trackInfo = youTubeResolver.resolveUrl(songUrl);
                     if (trackInfo != null) {
                         boolean success = createPlaylist(userId, playlistName, trackInfo.title, trackInfo.url, trackInfo.duration);
                         if (success) {
@@ -356,8 +361,8 @@ public class PlaylistService {
     private void loadSongInfoAndAddToPlaylist(MessageReceivedEvent event, String userId, String playlistName, String songUrl) {
         new Thread(() -> {
             try {
-                if (songUrl.contains("youtube.com") || songUrl.contains("youtu.be")) {
-                    YouTubeResolver.TrackInfo trackInfo = youTubeResolver.resolveYouTubeUrl(songUrl);
+                if (isYtDlpSupportedUrl(songUrl)) {
+                    YouTubeResolver.TrackInfo trackInfo = youTubeResolver.resolveUrl(songUrl);
                     if (trackInfo != null) {
                         boolean success = addSongToPlaylist(userId, playlistName, trackInfo.title, trackInfo.url, trackInfo.duration);
                         if (success) {

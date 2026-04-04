@@ -10,20 +10,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
- * YouTube URL 解析器
+ * 媒體 URL 解析器
  *
- * 這個類使用 yt-dlp 工具來解析 YouTube 影片，獲取直接的音頻串流 URL
- * 這樣可以繞過 LavaPlayer 在處理 YouTube 時遇到的反機器人保護問題
- *
- * 主要功能：
- * - 解析 YouTube URL 獲取影片標題
- * - 獲取直接音頻串流連結（最高品質音頻）
- * - 解析影片時長
- *
- * 技術實現：
- * - 使用 ProcessBuilder 執行 yt-dlp 命令
- * - 解析 yt-dlp 的輸出結果
- * - 處理各種錯誤情況
+ * 使用 yt-dlp 解析各平台影片（YouTube、Bilibili 等），獲取直接音頻串流 URL。
  */
 @Component
 public class YouTubeResolver {
@@ -58,16 +47,16 @@ public class YouTubeResolver {
     }
 
     /**
-     * 解析 YouTube URL 獲取影片資訊
+     * 解析任意 yt-dlp 支援的媒體 URL（YouTube、Bilibili 等）
      *
-     * 這個方法使用 yt-dlp 工具來解析 YouTube 影片，獲取：
-     * 1. 影片標題
-     * 2. 直接音頻串流 URL（最高品質）
-     * 3. 影片時長
-     *
-     * @param youtubeUrl YouTube 影片網址
-     * @return TrackInfo 物件包含影片資訊，如果解析失敗則返回 null
+     * @param mediaUrl 媒體網址
+     * @return TrackInfo 包含標題、串流 URL 和時長，解析失敗時返回 null
      */
+    public TrackInfo resolveUrl(String mediaUrl) {
+        return resolveYouTubeUrl(mediaUrl);
+    }
+
+    /** @deprecated 請改用 {@link #resolveUrl(String)} */
     public TrackInfo resolveYouTubeUrl(String youtubeUrl) {
         try {
             // 建立 yt-dlp 命令列表

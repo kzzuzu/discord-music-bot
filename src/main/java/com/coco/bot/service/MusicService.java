@@ -10,6 +10,8 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
+import com.sedmelluq.discord.lavaplayer.source.http.HttpAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -76,6 +78,8 @@ public class MusicService {
             logger.info("使用預設來源管理器");
         }
 
+        audioPlayerManager.registerSourceManager(new TwitchStreamAudioSourceManager());
+        audioPlayerManager.registerSourceManager(new HttpAudioSourceManager());
         AudioSourceManagers.registerLocalSource(audioPlayerManager);
 
         // 創建音頻播放器實例
@@ -218,11 +222,18 @@ public class MusicService {
         logger.info("語音連線已請求: {}", voiceChannel.getName());
     }
 
+    private static boolean isBilibiliUrl(String url) {
+        return url.contains("bilibili.com") || url.contains("b23.tv");
+    }
+
     /**
-     * 載入並播放音樂
-     * 現在直接使用 LavaPlayer 的 YouTube 來源管理器，不再需要 yt-dlp 解析
+     * 載入並播放音樂。Bilibili 先用 yt-dlp 解析成直接串流 URL，其餘交由 LavaPlayer 處理。
      */
     private void loadAndPlay(TextChannel channel, String trackUrl) {
+        if (isBilibiliUrl(trackUrl)) {
+            loadBilibili(channel, trackUrl);
+            return;
+        }
         audioPlayerManager.loadItem(trackUrl, new AudioLoadResultHandler() {
             @Override
             public void trackLoaded(AudioTrack track) {
@@ -256,6 +267,43 @@ public class MusicService {
                 logger.error("❌ 載入音軌失敗: {} - {}", trackUrl, exception.getMessage(), exception);
             }
         });
+    }
+
+    /**
+     * 用 yt-dlp 解析 Bilibili URL，取得直接串流後交給 LavaPlayer 播放
+     */
+    private void loadBilibili(TextChannel channel, String trackUrl) {
+        new Thread(() -> {
+            YouTubeResolver.TrackInfo trackInfo = youTubeResolver.resolveUrl(trackUrl);
+            if (trackInfo == null) {
+                channel.sendMessage("❌ 無法解析 Bilibili 影片，請確認網址是否正確。").queue();
+                logger.warn("Bilibili 解析失敗: {}", trackUrl);
+                return;
+            }
+            logger.info("Bilibili 解析成功: {}", trackInfo.title);
+            audioPlayerManager.loadItem(trackInfo.url, new AudioLoadResultHandler() {
+                @Override
+                public void trackLoaded(AudioTrack track) {
+                    handleTrackLoaded(channel, track, trackInfo.title, trackInfo.duration);
+                }
+                @Override
+                public void playlistLoaded(AudioPlaylist playlist) {
+                    AudioTrack first = playlist.getTracks().isEmpty() ? null : playlist.getTracks().get(0);
+                    if (first != null) {
+                        handleTrackLoaded(channel, first, trackInfo.title, trackInfo.duration);
+                    }
+                }
+                @Override
+                public void noMatches() {
+                    channel.sendMessage("❌ 無法載入 Bilibili 音頻串流，串流網址可能已過期。").queue();
+                }
+                @Override
+                public void loadFailed(FriendlyException exception) {
+                    channel.sendMessage("❌ 載入 Bilibili 音頻失敗: " + exception.getMessage()).queue();
+                    logger.error("Bilibili 載入失敗: {}", exception.getMessage(), exception);
+                }
+            });
+        }, "bilibili-resolver").start();
     }
 
     /**

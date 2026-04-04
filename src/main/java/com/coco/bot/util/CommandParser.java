@@ -23,7 +23,7 @@ public class CommandParser {
     
     // URL 模式匹配
     private static final Pattern URL_PATTERN = Pattern.compile(
-        "(https?://(www\\.)?(youtube\\.com|youtu\\.be|soundcloud\\.com|spotify\\.com)[^\\s]+)",
+        "(https?://(www\\.)?(youtube\\.com|youtu\\.be|bilibili\\.com|b23\\.tv|twitch\\.tv|soundcloud\\.com|spotify\\.com)[^\\s]+)",
         Pattern.CASE_INSENSITIVE
     );
 
