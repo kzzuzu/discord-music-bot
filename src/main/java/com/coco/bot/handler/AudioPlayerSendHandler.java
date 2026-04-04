@@ -24,9 +24,6 @@ import java.nio.ByteBuffer;
  */
 public class AudioPlayerSendHandler implements AudioSendHandler {
 
-    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AudioPlayerSendHandler.class);
-    private boolean firstCallLogged = false;
-
     /** LavaPlayer 音頻播放器實例 */
     private final AudioPlayer audioPlayer;
 
@@ -64,10 +61,6 @@ public class AudioPlayerSendHandler implements AudioSendHandler {
      */
     @Override
     public boolean canProvide() {
-        if (!firstCallLogged) {
-            firstCallLogged = true;
-            logger.info("canProvide() 首次被 JDA 呼叫 — 音訊傳送迴圈已啟動");
-        }
         return audioPlayer.provide(frame);
     }
 

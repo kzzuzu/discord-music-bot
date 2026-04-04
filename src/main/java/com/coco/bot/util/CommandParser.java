@@ -175,10 +175,9 @@ public class CommandParser {
      * @return 格式化的時長字串
      */
     public static String formatDuration(long duration) {
-        if (duration <= 0) {
-            return "未知";
-        }
-        
+        if (duration == Long.MAX_VALUE) return "🔴 LIVE";
+        if (duration <= 0) return "未知";
+
         long seconds = duration / 1000;
         long minutes = seconds / 60;
         long hours = minutes / 60;

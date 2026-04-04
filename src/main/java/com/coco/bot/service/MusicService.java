@@ -3,6 +3,7 @@ package com.coco.bot.service;
 import com.coco.bot.handler.AudioPlayerSendHandler;
 import com.coco.bot.handler.MusicQueue;
 import com.coco.bot.handler.YouTubeResolver;
+import com.coco.bot.util.CommandParser;
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
@@ -121,10 +122,14 @@ public class MusicService {
      * @param url 音樂網址
      */
     public void playMusic(VoiceChannel voiceChannel, TextChannel textChannel, String url) {
-        // 連接到語音頻道
         connectToVoiceChannel(voiceChannel.getGuild().getAudioManager(), voiceChannel);
+        loadAndPlay(textChannel, url);
+    }
 
-        // 載入並播放音樂
+    /**
+     * 將音樂加入佇列（不重新連接語音頻道）
+     */
+    public void queueMusic(TextChannel textChannel, String url) {
         loadAndPlay(textChannel, url);
     }
 
@@ -187,7 +192,7 @@ public class MusicService {
         AudioTrack current = musicQueue.getCurrentTrack();
         if (current != null) {
             queueInfo.append("🔄 **目前播放:** ").append(current.getInfo().title)
-                    .append(" (").append(formatDuration(current.getDuration())).append(")\n");
+                    .append(" (").append(CommandParser.formatDuration(current.getDuration())).append(")\n");
         } else {
             queueInfo.append("🔄 **目前播放:** 無\n");
         }
@@ -261,34 +266,15 @@ public class MusicService {
             musicQueue.setCurrentTrack(track);
             audioPlayer.playTrack(track);
             channel.sendMessage("🎵 **正在播放:** " + title +
-                    " (" + formatDuration(duration) + ")").queue();
+                    " (" + CommandParser.formatDuration(duration) + ")").queue();
             logger.info("開始播放音軌: {}", title);
         } else {
             musicQueue.addTrack(track);
             channel.sendMessage("📝 **已加入佇列:** " + title +
-                    " (" + formatDuration(duration) + ")" +
+                    " (" + CommandParser.formatDuration(duration) + ")" +
                     "\n🔢 **佇列位置:** " + musicQueue.getQueueSize()).queue();
             logger.info("音軌已加入佇列: {} (位置: {})", title, musicQueue.getQueueSize());
         }
     }
 
-    /**
-     * 格式化時長
-     */
-    private String formatDuration(long duration) {
-        if (duration == Long.MAX_VALUE) return "🔴 LIVE";
-
-        long seconds = duration / 1000;
-        long minutes = seconds / 60;
-        long hours = minutes / 60;
-
-        seconds %= 60;
-        minutes %= 60;
-
-        if (hours > 0) {
-            return String.format("%d:%02d:%02d", hours, minutes, seconds);
-        } else {
-            return String.format("%d:%02d", minutes, seconds);
-        }
-    }
 }

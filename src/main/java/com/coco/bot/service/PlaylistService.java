@@ -289,15 +289,11 @@ public class PlaylistService {
         VoiceChannel voiceChannel = member.getVoiceState().getChannel().asVoiceChannel();
         event.getChannel().sendMessage("🎵 **開始播放播放清單：" + playlistName + "** (" + songs.size() + " 首歌)").queue();
 
-        // 播放第一首歌並將其餘歌曲加入佇列
-        for (int i = 0; i < songs.size(); i++) {
-            PlaylistItem song = songs.get(i);
-            if (i == 0) {
-                musicService.playMusic(voiceChannel, event.getChannel().asTextChannel(), song.getSongUrl());
-            } else {
-                // 這裡需要添加到佇列的方法
-                // musicService.addToQueue(song.getSongUrl());
-            }
+        TextChannel textChannel = event.getChannel().asTextChannel();
+        PlaylistItem firstSong = songs.get(0);
+        musicService.playMusic(voiceChannel, textChannel, firstSong.getSongUrl());
+        for (int i = 1; i < songs.size(); i++) {
+            musicService.queueMusic(textChannel, songs.get(i).getSongUrl());
         }
     }
 

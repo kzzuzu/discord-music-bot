@@ -126,28 +126,28 @@ public class DiscordEventController extends ListenerAdapter {
 
         switch (subCommand.toLowerCase()) {
             case "create":
-                handleCreatePlaylist(event, subArgs, userId);
+                playlistService.handleCreatePlaylist(event, subArgs, userId);
                 break;
             case "add":
-                handleAddToPlaylist(event, subArgs, userId);
+                playlistService.handleAddToPlaylist(event, subArgs, userId);
                 break;
             case "list":
-                handleListPlaylists(event, userId);
+                playlistService.handleListPlaylists(event, userId);
                 break;
             case "show":
-                handleShowPlaylist(event, subArgs, userId);
+                playlistService.handleShowPlaylist(event, subArgs, userId);
                 break;
             case "delete":
-                handleDeletePlaylist(event, subArgs, userId);
+                playlistService.handleDeletePlaylist(event, subArgs, userId);
                 break;
             case "remove":
-                handleRemoveFromPlaylist(event, subArgs, userId);
+                playlistService.handleRemoveFromPlaylist(event, subArgs, userId);
                 break;
             case "play":
-                handlePlayPlaylist(event, subArgs, userId);
+                playlistService.handlePlayPlaylist(event, subArgs, userId, musicService);
                 break;
             default:
-                handlePlaylistHelp(event);
+                playlistService.handlePlaylistHelp(event);
                 break;
         }
     }
@@ -158,7 +158,6 @@ public class DiscordEventController extends ListenerAdapter {
     private void handleStopCommand(MessageReceivedEvent event) {
         musicService.stopMusic();
         event.getChannel().sendMessage("⏹️ 已停止播放並清空佇列").queue();
-        logger.info("用戶停止播放並清空佇列");
     }
 
     /**
@@ -167,7 +166,6 @@ public class DiscordEventController extends ListenerAdapter {
     private void handlePauseCommand(MessageReceivedEvent event) {
         musicService.pauseMusic();
         event.getChannel().sendMessage("⏸️ 已暫停播放").queue();
-        logger.info("用戶暫停播放");
     }
 
     /**
@@ -176,7 +174,6 @@ public class DiscordEventController extends ListenerAdapter {
     private void handleResumeCommand(MessageReceivedEvent event) {
         musicService.resumeMusic();
         event.getChannel().sendMessage("▶️ 已恢復播放").queue();
-        logger.info("用戶恢復播放");
     }
 
     /**
@@ -213,36 +210,4 @@ public class DiscordEventController extends ListenerAdapter {
         event.getChannel().sendMessage(helpMessage).queue();
     }
 
-    // 播放清單相關方法委派給 PlaylistService 處理
-    private void handleCreatePlaylist(MessageReceivedEvent event, List<String> args, String userId) {
-        playlistService.handleCreatePlaylist(event, args, userId);
-    }
-
-    private void handleAddToPlaylist(MessageReceivedEvent event, List<String> args, String userId) {
-        playlistService.handleAddToPlaylist(event, args, userId);
-    }
-
-    private void handleListPlaylists(MessageReceivedEvent event, String userId) {
-        playlistService.handleListPlaylists(event, userId);
-    }
-
-    private void handleShowPlaylist(MessageReceivedEvent event, List<String> args, String userId) {
-        playlistService.handleShowPlaylist(event, args, userId);
-    }
-
-    private void handleDeletePlaylist(MessageReceivedEvent event, List<String> args, String userId) {
-        playlistService.handleDeletePlaylist(event, args, userId);
-    }
-
-    private void handleRemoveFromPlaylist(MessageReceivedEvent event, List<String> args, String userId) {
-        playlistService.handleRemoveFromPlaylist(event, args, userId);
-    }
-
-    private void handlePlayPlaylist(MessageReceivedEvent event, List<String> args, String userId) {
-        playlistService.handlePlayPlaylist(event, args, userId, musicService);
-    }
-
-    private void handlePlaylistHelp(MessageReceivedEvent event) {
-        playlistService.handlePlaylistHelp(event);
-    }
 }
