@@ -1,7 +1,8 @@
 package com.coco.bot.service;
 
 import com.coco.bot.controller.DiscordEventController;
-import club.minnced.discord.jdave.interop.JDaveSessionFactory;
+import moe.kyokobot.libdave.jda.LDJDADaveSessionFactory;
+import moe.kyokobot.libdave.NativeDaveFactory;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.audio.AudioModuleConfig;
@@ -35,8 +36,16 @@ public class DiscordBotService {
             JDABuilder builder = JDABuilder.createDefault(botToken);
             builder.addEventListeners(discordEventController);
             builder.enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_VOICE_STATES);
-            builder.setAudioModuleConfig(new AudioModuleConfig().withDaveSessionFactory(new JDaveSessionFactory()));
-            logger.info("已啟用 DAVE E2EE 協議支援 (JDaveSessionFactory)");
+
+            // 啟用 DAVE E2EE 加密，Discord 現在強制要求（close code 4017）
+            try {
+                AudioModuleConfig audioConfig = new AudioModuleConfig()
+                        .withDaveSessionFactory(new LDJDADaveSessionFactory(new NativeDaveFactory()));
+                builder.setAudioModuleConfig(audioConfig);
+                logger.info("DAVE E2EE 加密已啟用");
+            } catch (Exception e) {
+                logger.warn("DAVE E2EE native library 載入失敗，語音連線可能無法使用: {}", e.getMessage());
+            }
 
             this.jda = builder.build();
             this.jda.awaitReady();

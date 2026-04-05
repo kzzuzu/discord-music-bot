@@ -2,6 +2,7 @@ package com.coco.bot.handler;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -74,43 +75,68 @@ public class YouTubeResolver {
             command.add("--get-url");          // 獲取直接串流 URL
             command.add("--get-duration");     // 獲取影片時長
             command.add("--format");           // 指定格式
-            command.add("bestaudio/best");     // 最佳音頻品質，如果沒有則使用最佳品質
+            command.add("bestaudio[vcodec=none]/bestaudio[ext=m4a]/bestaudio/best"); // 優先選純音頻串流，避免 DASH 返回多行 URL
             command.add("--no-playlist");      // 只下載單一影片，不處理播放列表
-            command.add(youtubeUrl);           // YouTube URL
+            command.add("--quiet");            // 靜音模式：僅輸出資料到 stdout，進度/警告輸出到 stderr
+            command.add("--no-warnings");      // 不輸出警告到 stderr
+            command.add(youtubeUrl);
 
             // 建立並配置 Process
+            // 不使用 redirectErrorStream：stdout = 純資料，stderr = 錯誤訊息（分開讀取）
             ProcessBuilder pb = new ProcessBuilder(command);
-            pb.redirectErrorStream(true); // 將錯誤輸出重定向到標準輸出
+            // 強制 Python（yt-dlp）以 UTF-8 輸出，避免 Windows 預設 GBK/CP950 亂碼
+            pb.environment().put("PYTHONIOENCODING", "utf-8");
+            pb.environment().put("PYTHONUTF8", "1");
             Process process = pb.start();
 
-            // 讀取 yt-dlp 的輸出
-            List<String> output = new ArrayList<>();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            // 非同步讀取 stderr（避免 stderr buffer 阻塞，同時擷取錯誤訊息）
+            List<String> stderrLines = new ArrayList<>();
+            Thread stderrThread = new Thread(() -> {
+                try (BufferedReader err = new BufferedReader(
+                        new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8))) {
+                    String line;
+                    while ((line = err.readLine()) != null) {
+                        stderrLines.add(line);
+                    }
+                } catch (Exception ignored) {}
+            });
+            stderrThread.start();
+
+            // 讀取 stdout（--quiet 模式下僅含 title/url/duration 資料）
+            List<String> dataLines = new ArrayList<>();
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    output.add(line);
+                    if (!line.isBlank()) {
+                        dataLines.add(line);
+                    }
                 }
             }
 
-            // 等待 process 完成並檢查退出代碼
+            // 等待 process 和 stderr 讀取完成
             int exitCode = process.waitFor();
+            stderrThread.join();
 
-            if (exitCode == 0 && output.size() >= 3) {
+            if (exitCode == 0 && dataLines.size() >= 3) {
                 // 解析成功，提取資訊
-                // yt-dlp 的輸出順序：標題、URL、時長
-                String title = output.get(0);
-                String directUrl = output.get(1);
-                String durationStr = output.get(2);
+                // yt-dlp 的輸出順序：標題、URL（可能多行，如 DASH）、時長
+                // 標題固定在第一行，時長固定在最後一行，取第一條 URL
+                String title = dataLines.get(0);
+                String directUrl = dataLines.get(1);
+                String durationStr = dataLines.get(dataLines.size() - 1);
 
                 // 解析時長字符串為毫秒
                 long duration = parseDuration(durationStr);
 
                 return new TrackInfo(title, directUrl, duration);
             } else {
-                // 解析失敗，記錄錯誤資訊
-                logger.error("yt-dlp 失敗，退出碼: {}", exitCode);
-                for (String line : output) {
-                    logger.error("yt-dlp 輸出: {}", line);
+                logger.error("yt-dlp 失敗，退出碼: {}，stdout 行數: {}", exitCode, dataLines.size());
+                for (String line : dataLines) {
+                    logger.error("yt-dlp stdout: {}", line);
+                }
+                for (String line : stderrLines) {
+                    logger.error("yt-dlp stderr: {}", line);
                 }
             }
 

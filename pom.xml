@@ -33,6 +33,11 @@
             <name>Lavalink Repository</name>
             <url>https://maven.lavalink.dev/releases</url>
         </repository>
+        <repository>
+            <id>lavalink-snapshots</id>
+            <name>Lavalink Snapshots</name>
+            <url>https://maven.lavalink.dev/snapshots</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -60,17 +65,30 @@
             <version>6.4.1</version>
         </dependency>
 
-        <!-- DAVE/E2EE protocol support for Discord voice -->
+        <!-- DAVE E2EE 加密支援（JDA 6.x 需要外部 native 實作） -->
         <dependency>
-            <groupId>club.minnced</groupId>
-            <artifactId>jdave-api</artifactId>
-            <version>0.1.8</version>
+            <groupId>moe.kyokobot.libdave</groupId>
+            <artifactId>adapter-jda</artifactId>
+            <version>0.1.0</version>
         </dependency>
         <dependency>
-            <groupId>club.minnced</groupId>
-            <artifactId>jdave-native-win-x86-64</artifactId>
-            <version>0.1.8</version>
+            <groupId>moe.kyokobot.libdave</groupId>
+            <artifactId>impl-jni</artifactId>
+            <version>0.1.0</version>
         </dependency>
+        <!-- Windows native (IDEA 本地開發) -->
+        <dependency>
+            <groupId>moe.kyokobot.libdave</groupId>
+            <artifactId>natives-win-x86-64</artifactId>
+            <version>0.1.0</version>
+        </dependency>
+        <!-- Linux native (Docker 部署) -->
+        <dependency>
+            <groupId>moe.kyokobot.libdave</groupId>
+            <artifactId>natives-linux-x86-64</artifactId>
+            <version>0.1.0</version>
+        </dependency>
+
 
         <!-- JUnit 5 for testing -->
         <dependency>
@@ -194,10 +212,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.12.1</version>
+                <version>3.13.0</version>
                 <configuration>
-                    <source>25</source>
-                    <target>25</target>
+                    <release>25</release>
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>

@@ -5,6 +5,7 @@ import com.coco.bot.entity.PlaylistItem;
 import com.coco.bot.handler.YouTubeResolver;
 import com.coco.bot.util.CommandParser;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import org.slf4j.Logger;
@@ -331,14 +332,15 @@ public class PlaylistService {
                 if (isYtDlpSupportedUrl(songUrl)) {
                     YouTubeResolver.TrackInfo trackInfo = youTubeResolver.resolveUrl(songUrl);
                     if (trackInfo != null) {
-                        boolean success = createPlaylist(userId, playlistName, trackInfo.title, trackInfo.url, trackInfo.duration);
+                        // 存原始 URL，避免 B 站等平台的直連 URL 過期失效
+                        boolean success = createPlaylist(userId, playlistName, trackInfo.title, songUrl, trackInfo.duration);
                         if (success) {
                             event.getChannel().sendMessage("✅ 播放清單 **" + playlistName + "** 創建成功！\n🎵 已添加：**" + trackInfo.title + "**").queue();
                         } else {
                             event.getChannel().sendMessage("❌ 創建播放清單失敗，請稍後再試。").queue();
                         }
                     } else {
-                        event.getChannel().sendMessage("❌ 無法解析該 YouTube 影片，請檢查網址。").queue();
+                        event.getChannel().sendMessage("❌ 無法解析該影片，請檢查網址。").queue();
                     }
                 } else {
                     boolean success = createPlaylist(userId, playlistName, "Unknown Title", songUrl, 0L);
@@ -364,14 +366,15 @@ public class PlaylistService {
                 if (isYtDlpSupportedUrl(songUrl)) {
                     YouTubeResolver.TrackInfo trackInfo = youTubeResolver.resolveUrl(songUrl);
                     if (trackInfo != null) {
-                        boolean success = addSongToPlaylist(userId, playlistName, trackInfo.title, trackInfo.url, trackInfo.duration);
+                        // 存原始 URL，避免 B 站等平台的直連 URL 過期失效
+                        boolean success = addSongToPlaylist(userId, playlistName, trackInfo.title, songUrl, trackInfo.duration);
                         if (success) {
                             event.getChannel().sendMessage("✅ 已添加到播放清單 **" + playlistName + "**：\n🎵 **" + trackInfo.title + "**").queue();
                         } else {
                             event.getChannel().sendMessage("❌ 添加歌曲失敗，請稍後再試。").queue();
                         }
                     } else {
-                        event.getChannel().sendMessage("❌ 無法解析該 YouTube 影片，請檢查網址。").queue();
+                        event.getChannel().sendMessage("❌ 無法解析該影片，請檢查網址。").queue();
                     }
                 } else {
                     boolean success = addSongToPlaylist(userId, playlistName, "Unknown Title", songUrl, 0L);

@@ -16,6 +16,9 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
+import org.apache.http.HttpHost;
+import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.protocol.HttpContext;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.managers.AudioManager;
@@ -81,6 +84,21 @@ public class MusicService {
         audioPlayerManager.registerSourceManager(new TwitchStreamAudioSourceManager());
         audioPlayerManager.registerSourceManager(new HttpAudioSourceManager());
         AudioSourceManagers.registerLocalSource(audioPlayerManager);
+
+        // Bilibili CDN 需要 Referer header，否則回傳 403
+        ((DefaultAudioPlayerManager) audioPlayerManager).setHttpBuilderConfigurator(builder ->
+            builder.addInterceptorLast((org.apache.http.HttpRequest request, HttpContext context) -> {
+                HttpClientContext ctx = HttpClientContext.adapt(context);
+                HttpHost target = ctx.getTargetHost();
+                if (target != null) {
+                    String host = target.getHostName();
+                    if (host != null && (host.contains("bilivideo") || host.contains("hdslb") || host.contains("bilivideo.cn"))) {
+                        request.setHeader("Referer", "https://www.bilibili.com");
+                        request.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+                    }
+                }
+            })
+        );
 
         // 創建音頻播放器實例
         this.audioPlayer = audioPlayerManager.createPlayer();
